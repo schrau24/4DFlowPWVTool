@@ -17,4 +17,4 @@ SUBJECTID or other identifier_3.par, SUBJECTID or other identifier_3.rec
 Within Matlab, navigate to the folder containing PulseWaveVelocityTool.mlapp. Type this into your command window:
 PulseWaveVelocityTool
 
-Further details for each step within the app can be found in the corresponding user manual: PulseWaveVelocityToolManual.pdf
+Further details for each step within the app can be found in the corresponding user manual: 4DFlowPWVTool User Manual.pdf
