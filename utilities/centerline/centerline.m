@@ -31,8 +31,7 @@
 
 function [CL, branchMat, branchList, branchTextList, junctionMat, junctionList] = centerline(Y, vMean, spurLength, sortingCriteria)
 
-global res
-
+res = size(Y);
 modified = 1;
 Niter = 0;
 
@@ -95,9 +94,6 @@ while modified > 0  && Niter < 20       % do until convergence
 
     end
     
-%     disp(['Number of deleted branches: ' num2str(modified-1)])
-%     disp(['CL-summa ' num2str(sum(sum(sum(CL))))])
-    
     % classify skeleton points
     CL = 2*logical(CL);
     CLindices = find(CL);
@@ -110,7 +106,6 @@ while modified > 0  && Niter < 20       % do until convergence
         neighSum = sum(sum(sum(logical(CL(x0-1:x0+1, y0-1:y0+1, z0-1:z0+1)))));
 
         % mark junction points
-        
         if neighSum > 3
             CL(CLindices(i)) = sortingCriteria;
         end
@@ -366,107 +361,3 @@ for n = 1:numel(bORDER)
     bListtemp = [bListtemp;branchActual];
 end
 branchList = bListtemp;
-
-% 
-% % mark endpoints in final skeleton
-% 
-% CLindices = find(CL);
-% 
-% for i = 1:length(CLindices)
-% 
-%     [x0 y0 z0] = ind2sub([res res res], CLindices(i));
-% 
-%     % 26-neighborhood sum
-%     neighSum = sum(sum(sum(logical(CL(x0-1:x0+1, y0-1:y0+1, z0-1:z0+1)))));
-% 
-%     % mark junction points
-% 
-%     if neighSum > 3
-%         CL(CLindices(i)) = sortingCriteria;
-%     end
-% 
-%     % mark endpoints
-%     if neighSum < 3
-%         CL(CLindices(i)) = 1;
-%     end
-% end
-% 
-% % sort branchList so that for each label, the points are in order from
-% % 1st junction/endpoint to 2nd junction/endpoint.
-% 
-% CLmod = CL;
-% labeled = 0;
-% 
-% uniqueBranchLabels = unique(branchList(:,4));
-% sortedBranchList = zeros(0,4);  % fill this with sorted branches
-% 
-% for i = 1:length(uniqueBranchLabels)
-% 
-%     currentBranchLabel = uniqueBranchLabels(i);
-%     currentBranchIndices = find(branchList(:,4) == currentBranchLabel);
-%     currentBranchLength = length(currentBranchIndices);
-% 
-%     startEnd = zeros(0,4);    % start and end point of branch
-% i
-%     for j = currentBranchIndices'
-% 
-%         x1 = branchList(j,1); y1 = branchList(j,2); z1 = branchList(j,3);
-% 
-%         % find neighborhoods
-%         CL26 = CL(x1-1:x1+1, y1-1:y1+1, z1-1:z1+1);
-%         edgePoints26 = [find(CL26 == 3); find(CL26 == 1)];
-%         [x2 y2 z2] = ind2sub([3 3 3], edgePoints26);
-% 
-%         x3 = x1 + x2 - 2;
-%         y3 = y1 + y2 - 2;
-%         z3 = z1 + z2 - 2;
-% 
-%         startEnd = [startEnd; x3 y3 z3 currentBranchLabel];
-% 
-%     end
-% 
-%     if startEnd(1,3) > startEnd(2,3)
-%         pointA = startEnd(2,:);
-%         pointB = startEnd(1,:);
-%     else
-%         pointA = startEnd(1,:);
-%         pointB = startEnd(2,:);
-%     end
-% 
-%     currentPoint = pointA;
-% 
-%     foundApoint = 1;
-% 
-%     while foundApoint
-% 
-%         foundApoint = 0;
-% 
-%         x1 = currentPoint(1); y1 = currentPoint(2); z1 = currentPoint(3);
-% 
-%         % find neighborhoods
-%         
-%         
-%         CL26 = CLmod(x1-1:x1+1, y1-1:y1+1, z1-1:z1+1);
-% 
-%         CLmod(x1,y1,z1) = 0;
-%         CL26(2,2,2) = 0;
-%         neigh = find(CL26 == 2);
-%         [x2 y2 z2] = ind2sub([3 3 3], neigh);
-% 
-%         x3 = x1 + x2 - 2;
-%         y3 = y1 + y2 - 2;
-%         z3 = z1 + z2 - 2
-% 
-%         if x3 && (currentPoint(4) == currentBranchLabel)  % if found another middle point that's the same label
-% 
-%             foundApoint = 1;
-%             labeled = labeled + 1;
-% 
-%             sortedBranchList = [sortedBranchList; x3 y3 z3 currentBranchLabel];
-% 
-%             currentPoint = [x3 y3 z3];
-%         end
-%         
-%     end
-% 
-% end
