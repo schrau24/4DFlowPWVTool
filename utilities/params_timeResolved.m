@@ -1,5 +1,5 @@
 function [flowPerHeartCycle_vol, flowPulsatile_vol, segment1, area_val] = ...
-            params_timeResolved(branchActual, res, angio, v, nframes, pixdim, aortaSeg_timeResolved, displayWaitBar)
+            params_timeResolved(branchActual, angio, v, nframes, pixdim, aortaSeg_timeResolved, displayWaitBar)
 
 global r
 
@@ -101,9 +101,9 @@ x_full = reshape(x_full,[length(branchActual),(Side.*2+1).^2]);
 y_full = reshape(y_full,[length(branchActual),(Side.*2+1).^2]);
 z_full = reshape(z_full,[length(branchActual),(Side.*2+1).^2]);
 
-x = 1:res(1);
-y = 1:res(2);
-z = 1:res(3);
+x = 1:size(angio,1);
+y = 1:size(angio,2);
+z = 1:size(angio,3);
 
 indexes = sub2ind(size(angio), branchActual(:,1), branchActual(:,2), branchActual(:,3));
 
@@ -172,7 +172,7 @@ end
 
 flowPulsatile = zeros(size(area_val,1),nframes);
 % initialize pulsatile volume
-flowPulsatile_vol = zeros(res(1)*res(2)*res(3),nframes);
+flowPulsatile_vol = zeros(prod(size(angio)),nframes);
 vTimeFramerowMean = zeros(size(area_val,1),nframes);
 
 for j = 1:nframes
