@@ -1,5 +1,5 @@
 function [flowPerHeartCycle_vol, flowPulsatile_vol, segment1, area_val] = ...
-            params_timeResolved(branchActual, angio, v, nframes, pixdim, aortaSeg_timeResolved, displayWaitBar)
+            params_timeResolved(branchActual, angio, v, nframes, pixdim, aortaSeg_timeResolved, ori, displayWaitBar)
 
 global r
 
@@ -175,6 +175,15 @@ flowPulsatile = zeros(size(area_val,1),nframes);
 flowPulsatile_vol = zeros(prod(size(angio)),nframes);
 vTimeFramerowMean = zeros(size(area_val,1),nframes);
 
+switch ori
+    case 1
+        tmpOri = [-1;-1;-1];
+    case 2
+        tmpOri = [-1;-1;-1];
+    case 3
+        tmpOri = [-1; -1; 1];
+end
+
 for j = 1:nframes
     
     v1 = interp3(y,x,z,v(:,:,:,1,j),y_full(:),x_full(:),z_full(:),'cubic',0);
@@ -183,9 +192,9 @@ for j = 1:nframes
     v1 = reshape(v1,[length(branchActual),(Side.*2+1).^2]);
     v2 = reshape(v2,[length(branchActual),(Side.*2+1).^2]);
     v3 = reshape(v3,[length(branchActual),(Side.*2+1).^2]);
-    v1 = -bsxfun(@times,v1,Tangent_V(:,1));
-    v2 = -bsxfun(@times,v2,Tangent_V(:,2));     %%%%% TEST!!
-    v3 = -bsxfun(@times,v3,Tangent_V(:,3));
+    v1 = tmpOri(1)*bsxfun(@times,v1,Tangent_V(:,1));
+    v2 = tmpOri(2)*bsxfun(@times,v2,Tangent_V(:,2));     %%%%% TEST!!
+    v3 = tmpOri(3)*bsxfun(@times,v3,Tangent_V(:,3));      % if coronal, positive, if sagittal negative
     
     % Apply rotations to velocity components in velocity cross
     % section before computing parameters

@@ -1,4 +1,4 @@
-function [directory, nframes, res, fov, pixdim, timeres, v, MAG, magWeightVel, angio, vMean, VENC] = ...
+function [directory, nframes, res, fov, pixdim, timeres, v, MAG, magWeightVel, angio, vMean, VENC, ori] = ...
     loadPARREC()
 % Get and load input directory
 
@@ -37,8 +37,9 @@ nframes = header.nphases;                                       % number of reco
 timeres = max(header.tbl(:,header.tblcols.ttime))/nframes;      % temporal resolution, in ms
 fov = header.fov;                                               % Field of view in cm
 res = round([header.nrows header.ncols header.nslices]);        % number of pixels in row,col,slices
-VENC = header.pevelocity(1)*10;                                 % venc, in mm/s
+VENC = max(header.pevelocity)*10;                                 % venc, in mm/s
 pixdim = header.pixdim;                                         % the reconstructed resolution
+ori = header.tbl(1,26);                                         % orientation number (1 - axial, 2 - sagittal, 3 - coronal)
 
 % scale velocity
 v = (v./2048)*VENC;
