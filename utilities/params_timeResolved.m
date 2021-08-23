@@ -178,11 +178,10 @@ if ~bTimeResolvedSeg    % if no time-resolved segmentation, use kmeans of magnit
     
     if 1
         CD_int = interp3(y,x,z,mean(aortaSeg_timeResolved,4),y_full(:),x_full(:),z_full(:),'cubic',0);
-        aa = reshape(CD_int,[length(branchActual),(Side.*2+1), Side.*2+1]);
         for n = 10:10:size(aa,1)
             figure(4); %clf;
             set(figure(4),'Name',['centerline point ' num2str(n)]);
-            a = squeeze(reshape(aa(n,:),[1 2*Side+1 2*Side+1]));
+            a = squeeze(reshape(aa(n,:),[1 2*Side+1 2*Side+1])); a = a/max(a(:));
 %             m = squeeze(reshape(mm(n,:),[1 2*Side+1 2*Side+1]));
             ss = squeeze(reshape(s(n,:),[1 2*Side+1 2*Side+1]));
             
