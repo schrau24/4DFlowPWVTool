@@ -13,7 +13,7 @@ METHOD = 'pchip';
 plot_steps = false;
 
 % grab first flow waveform
-flow_sl1 = smooth(circshift(interp1(x,waveforms(1,:),xq,METHOD),50),round(nFrames_interp/15));
+flow_sl1 = interp1(x,waveforms(1,:),xq,METHOD);
 if min(flow_sl1) < 0
     flow_sl1 = flow_sl1 + abs(min(flow_sl1));
 end
@@ -26,8 +26,15 @@ flow_sl1 = flow_sl1./max(abs(flow_sl1));
 
 % find the systolic upslope, TTF and wavelet
 [maxFl, indMax1] = max(flow_sl1);
-pts1 = find(flow_sl1 >= 0.2*maxFl & flow_sl1 <= 0.8*maxFl);
-pts1 = pts1(pts1<indMax1);
+
+% circshift to put max at center
+midPt = round(length(flow_sl1)/2);
+flow_sl1 = circshift(flow_sl1, midPt-indMax1);
+
+% 20% of max, first to the left
+indStart = max(find(flow_sl1(1:midPt) < 0.2*maxFl)) + 1;
+indEnd   = max(find(flow_sl1(indStart:midPt) < 0.8*maxFl)) + indStart -1;
+pts1 = indStart:indEnd;
 
 if PWVcalctype == 2     % TTF
     fitObject = polyfit(pts1,flow_sl1(pts1),1);
@@ -40,8 +47,9 @@ f1 = 1./PERIOD;
 ind = [];
 % loop over all flow curves
 for slice = 2:size(waveforms,1)
-
-    flow_sl2 = smooth(circshift(interp1(x,waveforms(slice,:),xq,METHOD),50),round(nFrames_interp/15));
+    
+    % second flow waveform, circshift by same amount as first waveform
+    flow_sl2 = circshift(interp1(x,waveforms(slice,:),xq,METHOD), midPt-indMax1);
     
     if min(flow_sl2) < 0
         flow_sl2 = flow_sl2 + abs(min(flow_sl2));
@@ -49,23 +57,24 @@ for slice = 2:size(waveforms,1)
     if min(flow_sl2) > 0
         flow_sl2 = flow_sl2 - (min(flow_sl2));
     end
-
-%     normalize
+    
+    %     normalize
     flow_sl2 = flow_sl2./max(abs(flow_sl2));
     
-    % TTF and wavelet
     % find the systolic upslope (20% < x < 80%) at or after maxInd of
     % flow_sl1
-    [maxFl, indMax] = max(flow_sl2(indMax1:end));
-    pts2 = find(flow_sl2 >= 0.2*maxFl & flow_sl2 <= 0.8*maxFl);
-    pts2 = pts2(pts2<indMax+indMax1);
+    [maxFl, indMax2] = max(flow_sl2);
+    % 20% of max, first to the left
+    indStart = max(find(flow_sl2(1:indMax2) < 0.2*maxFl)) + 1;
+    indEnd   = max(find(flow_sl2(indStart:indMax2) < 0.8*maxFl)) + indStart -1;
+    pts2 = indStart:indEnd;
     
     switch PWVcalctype
         case 1      % cross-correlation
-%             tempDelay = abs(finddelay(flow_sl1,flow_sl2)) * scale;
+            %             tempDelay = abs(finddelay(flow_sl1,flow_sl2)) * scale;
             % delay calculated on systolic upstroke only as per Saintounge
             % paperclc; clear all; close all;
-
+            
             sl1 = zeros(size(flow_sl1));sl1(pts1) = flow_sl1(pts1);
             sl2 = zeros(size(flow_sl2));sl2(pts2) = flow_sl2(pts2);
             tempDelay = abs(finddelay(sl1,sl2)) * scale;
@@ -92,16 +101,15 @@ for slice = 2:size(waveforms,1)
             ind_f = find(f1 >= 1 & f1 <= 10);
             
             % the points between foot of flow_sl1 and peak of flow_sl2
-            pts = unique([pts1; pts2]);
+            pts = unique([pts1, pts2]);
             
             % calculate y_hat
             y_hat = y/(sum(sum(abs(y))));
             
             psi = atan(imag(y))./repmat(f1'*2*pi,[1 size(y,2)]);
-%             aa = (y_hat(ind_f,pts)).*psi(ind_f,pts);        % eqn 7 in Bargiotas paper
             aa =    dot(y_hat(ind_f,pts),psi(ind_f,pts));  % eqn 7 in Bargiotas paper
             
-             tempDelay = abs(sum(aa(:)))*1000*4 * scale;
+            tempDelay = abs(sum(aa(:)))*1000*4 * scale;
             if (dist_total(slice-1) > 20 && tempDelay < 1) || ...
                     (dist_total(slice-1) > 40 && tempDelay < 2) || ...
                     (dist_total(slice-1) > 60 && tempDelay < 3) || ...
@@ -113,8 +121,8 @@ for slice = 2:size(waveforms,1)
             D(slice - 1) = tempDelay;
             
     end
-
-                
+    
+    
     if plot_steps
         figure(400); clf;
         plot(flow_sl1,'r'); hold on;
@@ -128,9 +136,13 @@ for slice = 2:size(waveforms,1)
     end
     
 end
-% remove unused slices
+% % remove unused slices
 D(ind-1) = [];
 dist_total(ind-1) = [];
+
+% remove outliers
+[D, TF] = rmoutliers(D,'movmedian', 30, 'ThresholdFactor',2);
+dist_total(find(TF)) = [];
 
 % now do a linear fit to calculate slope, save also rmse
 [fitObject, ~] = polyfit(dist_total,D,1);
