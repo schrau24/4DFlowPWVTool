@@ -10,7 +10,7 @@ nFrames_interp = floor(timeres/scale*nFrames);
 x = 1:nFrames;
 xq = linspace(1,nFrames,nFrames_interp);
 METHOD = 'pchip';
-plot_steps = false;
+plot_steps = true;
 
 % grab first flow waveform
 flow_sl1 = interp1(x,waveforms(1,:),xq,METHOD);
@@ -109,7 +109,8 @@ for slice = 2:size(waveforms,1)
             psi = atan(imag(y))./repmat(f1'*2*pi,[1 size(y,2)]);
             aa =    dot(y_hat(ind_f,pts),psi(ind_f,pts));  % eqn 7 in Bargiotas paper
             
-            tempDelay = abs(sum(aa(:)))*1000*4 * scale;
+%             tempDelay = abs(sum(aa(:)))*1000*4 * scale;
+            tempDelay = abs(sum(aa(:)))*1000 * scale;
             if (dist_total(slice-1) > 20 && tempDelay < 1) || ...
                     (dist_total(slice-1) > 40 && tempDelay < 2) || ...
                     (dist_total(slice-1) > 60 && tempDelay < 3) || ...
@@ -123,7 +124,7 @@ for slice = 2:size(waveforms,1)
     end
     
     
-    if plot_steps
+    if plot_steps && mod(slice,10) == 0
         figure(400); clf;
         plot(flow_sl1,'r'); hold on;
         plot(pts1,flow_sl1(pts1),'r*')
