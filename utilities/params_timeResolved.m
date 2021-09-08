@@ -176,23 +176,34 @@ if ~bTimeResolvedSeg    % if no time-resolved segmentation, use kmeans of magnit
     area_val = repmat(sum(s,2)*(vox*(2*r+1)/(2*r*InterpVals+1))^2,[1 nframes]);
     segment1 = repmat(s,[1 1 nframes]);
     
-    if 1
-        CD_int = interp3(y,x,z,mean(aortaSeg_timeResolved,4),y_full(:),x_full(:),z_full(:),'cubic',0);
-        for n = 10:10:size(aa,1)
-            figure(4); %clf;
-            set(figure(4),'Name',['centerline point ' num2str(n)]);
-            a = squeeze(reshape(aa(n,:),[1 2*Side+1 2*Side+1])); a = a/max(a(:));
-%             m = squeeze(reshape(mm(n,:),[1 2*Side+1 2*Side+1]));
-            ss = squeeze(reshape(s(n,:),[1 2*Side+1 2*Side+1]));
-            
-            subplot 121;imshow(a)
-%             subplot 132;imshow(m)
-            subplot 122;imshow(ss)
-            pause(0.2);
-            
-        end
-    end
+%     if 1
+%         CD_int = interp3(y,x,z,mean(aortaSeg_timeResolved,4),y_full(:),x_full(:),z_full(:),'cubic',0);
+%         for n = 10:10:size(aa,1)
+%             figure(4); %clf;
+%             set(figure(4),'Name',['centerline point ' num2str(n)]);
+%             a = squeeze(reshape(aa(n,:),[1 2*Side+1 2*Side+1])); a = a/max(a(:));
+% %             m = squeeze(reshape(mm(n,:),[1 2*Side+1 2*Side+1]));
+%             ss = squeeze(reshape(s(n,:),[1 2*Side+1 2*Side+1]));
+%             
+%             subplot 121;imshow(a)
+% %             subplot 132;imshow(m)
+%             subplot 122;imshow(ss)
+%             pause(0.2);
+%             
+%         end
+%     end
 end
+
+figure(4); %clf;
+a = aa(10:10:end,:);
+a = reshape(a,[size(a,1) 2*Side+1 2*Side+1]); a = a/max(a(:));
+subplot 121; montage(permute(a, [2 3 4 1]));
+title('angio images')
+ss = s(10:10:end,:);
+ss = reshape(ss,[size(ss,1) 2*Side+1 2*Side+1]);
+subplot 122; montage(permute(ss, [2 3 4 1]));
+% set(figure(4),'Name',);
+title(['segmentation for slices 10-' num2str(size(a,1)*10)])
 
 flowPulsatile = zeros(size(area_val,1),nframes);
 % initialize pulsatile volume
