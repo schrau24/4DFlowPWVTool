@@ -2,8 +2,8 @@ function [D, fitObject, dist_total] = calc_pwv(waveforms,dist_total, timeres, PW
 
 % PWV calc type: 1 is cross correlation, 2 is TTF, 3 is Wavelet
 % normalize waveforms, save scalingFactor to update delays appropriately
-[waveforms, ~, scalingFactor] = zscore(waveforms');
-scalingFactor = scalingFactor(1)./scalingFactor(2:end);
+wF_copy = waveforms;
+[waveforms] = normalize(waveforms', 'norm');
 waveforms = waveforms';
 
 % to interp to 1/scale ms, we need how many frames?
@@ -21,9 +21,11 @@ flow_sl1 = smooth(interp1(x,waveforms(1,:),xq,METHOD),25);
 
 if min(flow_sl1) < 0
     flow_sl1 = flow_sl1 + abs(min(flow_sl1));
+elseif min(flow_sl1) > 0
+    flow_sl1 = flow_sl1 - min(flow_sl1);
 end
 % normalize
-flow_sl1 = flow_sl1./max(abs(flow_sl1));
+% flow_sl1 = flow_sl1./max(abs(flow_sl1));
 
 % find the systolic upslope, TTF and wavelet
 [maxFl, indMax1] = max(flow_sl1);
@@ -31,6 +33,7 @@ flow_sl1 = flow_sl1./max(abs(flow_sl1));
 % circshift to put max at center
 midPt = round(length(flow_sl1)/2);
 flow_sl1 = circshift(flow_sl1, midPt-indMax1);
+fl1_copy = smooth(circshift(interp1(x,waveforms(1,:),xq,METHOD), midPt-indMax1),25);
 
 % 20% of max, first to the left
 indStart = max(find(flow_sl1(1:midPt) < 0.2*maxFl)) + 1;
@@ -54,12 +57,14 @@ for slice = 2:size(waveforms,1)
     
     % second flow waveform, circshift by same amount as first waveform
     flow_sl2 = smooth(circshift(interp1(x,waveforms(slice,:),xq,METHOD), midPt-indMax1),25);
-%     flow_sl2 = smooth(interp1(x,waveforms(slice,:),xq,METHOD));
+    fl2_copy = smooth(circshift(interp1(x,waveforms(slice,:),xq,METHOD), midPt-indMax1),25);
     if min(flow_sl2) < 0
         flow_sl2 = flow_sl2 + abs(min(flow_sl2));
+    elseif min(flow_sl2)>0
+        flow_sl2 = flow_sl2-min(flow_sl2);
     end
     % normalize
-    flow_sl2 = flow_sl2./max(abs(flow_sl2));
+%     flow_sl2 = flow_sl2./max(abs(flow_sl2));
   
     % find the systolic upslope (20% < x < 80%) at or after maxInd of
     % flow_sl1
@@ -86,7 +91,7 @@ for slice = 2:size(waveforms,1)
                 % force the delays to make sense along vessel
                 ind = cat(1,ind,slice);     % to remove at the end for fitting
             end
-            D(slice-1) = tempDelay * scale;
+            D(slice-1) = tempDelay;
             
         case 2      % TTF
             fitObject = polyfit(pts2,flow_sl2(pts2),1);
@@ -104,17 +109,20 @@ for slice = 2:size(waveforms,1)
             ind_f = find(f1 >= fc & f1 <= 10);
             
             % the complex cross-spectrum
-            y = y1(ind_f,pts).*conj(y2(ind_f,pts));
+            y = y1(ind_f,pts1).*conj(y2(ind_f,pts1));
               
             % calculate y_hat
             y_hat = y/(sum(sum(abs(y))));
             
-            psi =   atan2(imag(y),real(y))./repmat(f1(ind_f)'*2*pi,[1 length(pts)]);
+            psi =   atan2(imag(y),real(y))./repmat(f1(ind_f)'*2*pi,[1 length(pts1)]);
             aa =    dot(y_hat,psi);  % eqn 7 in Bargiotas paper
             tempDelay = abs(sum(aa(:)))*1000 * scale;
             
             % re-scale delay from zscore
-            tempDelay = tempDelay/(scalingFactor(slice-1));
+            [~, m1, s1] = zscore(fl1_copy(pts));
+            [~, m2, s2] = zscore(fl2_copy(pts));
+            tempDelay = tempDelay/(s1/s2);
+%             tempDelay = tempDelay/(scalingFactor(slice-1));
             
             if (dist_total(slice-1) > 20 && tempDelay < 1) || ...
                     (dist_total(slice-1) > 40 && tempDelay < 2) || ...
