@@ -17,7 +17,7 @@ METHOD = 'pchip';
 plot_steps = false;
 
 % grab first flow waveform
-flow_sl1 = smooth(interp1(x,waveforms(1,:),xq,METHOD),25);
+flow_sl1 = smoothdata(interp1(x,waveforms(1,:),xq,METHOD),25);
 
 if min(flow_sl1) < 0
     flow_sl1 = flow_sl1 + abs(min(flow_sl1));
@@ -33,7 +33,7 @@ end
 % circshift to put max at center
 midPt = round(length(flow_sl1)/2);
 flow_sl1 = circshift(flow_sl1, midPt-indMax1);
-fl1_copy = smooth(circshift(interp1(x,waveforms(1,:),xq,METHOD), midPt-indMax1),25);
+fl1_copy = smoothdata(circshift(interp1(x,waveforms(1,:),xq,METHOD), midPt-indMax1),25);
 
 % 20% of max, first to the left
 indStart = max(find(flow_sl1(1:midPt) < 0.2*maxFl)) + 1;
@@ -56,8 +56,8 @@ ind = [];
 for slice = 2:size(waveforms,1)
     
     % second flow waveform, circshift by same amount as first waveform
-    flow_sl2 = smooth(circshift(interp1(x,waveforms(slice,:),xq,METHOD), midPt-indMax1),25);
-    fl2_copy = smooth(circshift(interp1(x,waveforms(slice,:),xq,METHOD), midPt-indMax1),25);
+    flow_sl2 = smoothdata(circshift(interp1(x,waveforms(slice,:),xq,METHOD), midPt-indMax1),25);
+    fl2_copy = smoothdata(circshift(interp1(x,waveforms(slice,:),xq,METHOD), midPt-indMax1),25);
     if min(flow_sl2) < 0
         flow_sl2 = flow_sl2 + abs(min(flow_sl2));
     elseif min(flow_sl2)>0
