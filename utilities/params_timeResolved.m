@@ -1,9 +1,10 @@
 function [flowPerHeartCycle_vol, flowPulsatile_vol, segment1, area_val] = ...
-            params_timeResolved(branchActual, angio, v, nframes, pixdim, aortaSeg_timeResolved, ori, displayWaitBar)
+    params_timeResolved(branchActual, angio, MAG, v, nframes, pixdim, aortaSeg_timeResolved,...
+    isSegLoaded, bTimeResolvedSeg, displayWaitBar)
 
 global r
 
-d = 1;  % the number of points before and after to calculate orthogonal plane
+d = 4;  % the number of points before and after to calculate orthogonal plane
 Tangent_V = zeros(0,3);
 
 dir_temp = zeros(size(branchActual,1),3);
@@ -125,64 +126,95 @@ for frame = 1:nframes
     v_temp = interp3(y,x,z,squeeze(v(:,:,:,3,frame)),y_full(:),x_full(:),z_full(:),'cubic',0);
     v3(:,:,frame) = reshape(v_temp,[length(branchActual),(Side.*2+1).^2]);
     
-    %Interpolation for the complex difference data
-    CD_int = interp3(y,x,z,aortaSeg_timeResolved(:,:,:,frame),y_full(:),x_full(:),z_full(:),'cubic',0);
-    
-    SE = strel('disk', 2);
-    ss = reshape(CD_int,[length(branchActual),(Side.*2+1),(Side.*2+1)]);
-    for sl = 1:size(ss,1)
-        segment2 = imerode(squeeze(ss(sl,:,:)),SE);
-        segment2 = regiongrowing(segment2,round(length(segment2)/2),round(length(segment2)/2));
-        segment2 = imdilate(segment2, SE);
-        s(sl,:) = reshape(segment2,[1 (Side.*2+1).^2]);
-    end
-    
-    angiocrossection(:,:,frame) = s;
-    
-    % area
-    vox = mean(pixdim)/10;
-    area_val(:,frame) = sum(s,2)*(vox*(2*r+1)/(2*r*InterpVals+1))^2;
-    segment1(:,:,frame) = s;
-    if displayWaitBar
-        waitbar (frame/nframes, h);
+    if bTimeResolvedSeg         % if we have a time-resolved segmentation
+        %Interpolation for the complex difference data
+        CD_int = interp3(y,x,z,aortaSeg_timeResolved(:,:,:,frame),y_full(:),x_full(:),z_full(:),'cubic',0);
+        
+        SE = strel('disk', 2);
+        ss = reshape(CD_int,[length(branchActual),(Side.*2+1),(Side.*2+1)]);
+        for sl = 1:size(ss,1)
+            segment2 = imerode(squeeze(ss(sl,:,:)),SE);
+            segment2 = regiongrowing(segment2,round(length(segment2)/2),round(length(segment2)/2));
+            segment2 = imdilate(segment2, SE);
+            s(sl,:) = reshape(segment2,[1 (Side.*2+1).^2]);
+        end
+        % area
+        vox = mean(pixdim)/10;
+        area_val(:,frame) = sum(s,2)*(vox*(2*r+1)/(2*r*InterpVals+1))^2;
+        segment1(:,:,frame) = s;
+        if displayWaitBar
+            waitbar (frame/nframes, h);
+        end
     end
 end
 
-if 0
-    global aorta_seg
-    CD_int = interp3(y,x,z,aorta_seg,y_full(:),x_full(:),z_full(:),'cubic',0);
-    aa = reshape(CD_int,[length(branchActual),(Side.*2+1), Side.*2+1]);
-    for n = 1:size(aa,1)%10:40:size(aa,1)
-        figure(4); clf;
-        set(figure(4),'Name',['centerline point ' num2str(n)]);
-        ss = squeeze(segment1(n,:,:));
-
-        ss = reshape(ss,2*Side+1,2*Side+1,nframes);
-        for j = 1:nframes
-            subplot 121
-            imshow(squeeze(aa(n,:,:)))
-            subplot 122
-            imshow(ss(:,:,j));
-            title(['frame = ' num2str(j)])
-            pause(0.1);
-            
+if ~bTimeResolvedSeg    % if no time-resolved segmentation, use kmeans of magnitude and angio images
+    %Interpolation for the complex difference data
+    if isSegLoaded
+        angio_int = interp3(y,x,z,aortaSeg_timeResolved(:,:,:,1),y_full(:),x_full(:),z_full(:),'cubic',0);
+    else
+        angio_int   = interp3(y,x,z,angio,y_full(:),x_full(:),z_full(:),'cubic',0);
+    end
+    %     MAG_int     = interp3(y,x,z,mean(MAG,4),y_full(:),x_full(:),z_full(:),'cubic',0);
+    SE = strel('disk', 2);
+    aa = reshape(angio_int,[length(branchActual),(Side.*2+1)*(Side.*2+1)]);
+    %     mm = reshape(MAG_int,[length(branchActual),(Side.*2+1)*(Side.*2+1)]);
+    for sl = 1:size(aa,1)
+        clust = horzcat(aa(sl,:)');%,mm(sl,:)');
+        [idx,~] = kmeans(clust,2);       % kmeans to segment
+        segment2 = zeros([Side.*2+1,Side.*2+1]);
+        segment2(idx==2) = 1;
+        if segment2(round(numel(segment2(:,1))/2),round(numel(segment2(1,:))/2)) == 0
+            segment2 = -1*segment2+1;
+        end
+        segment2 = imerode(segment2,SE);
+        segment2 = regiongrowing(segment2,round(length(segment2)/2),round(length(segment2)/2));
+        segment2 = imdilate(segment2, SE);
+        s(sl,:) = reshape(segment2,[1 (Side.*2+1).^2]);
+        
+        if displayWaitBar
+            waitbar (sl/size(aa,1), h);
         end
     end
+    % area
+    vox = mean(pixdim)/10;
+    area_val = repmat(sum(s,2)*(vox*(2*r+1)/(2*r*InterpVals+1))^2,[1 nframes]);
+    segment1 = repmat(s,[1 1 nframes]);
+    
+    %     if 1
+    %         CD_int = interp3(y,x,z,mean(aortaSeg_timeResolved,4),y_full(:),x_full(:),z_full(:),'cubic',0);
+    %         for n = 10:10:size(aa,1)
+    %             figure(4); %clf;
+    %             set(figure(4),'Name',['centerline point ' num2str(n)]);
+    %             a = squeeze(reshape(aa(n,:),[1 2*Side+1 2*Side+1])); a = a/max(a(:));
+    % %             m = squeeze(reshape(mm(n,:),[1 2*Side+1 2*Side+1]));
+    %             ss = squeeze(reshape(s(n,:),[1 2*Side+1 2*Side+1]));
+    %
+    %             subplot 121;imshow(a)
+    % %             subplot 132;imshow(m)
+    %             subplot 122;imshow(ss)
+    %             pause(0.2);
+    %
+    %         end
+    %     end
+    
+    figure(4); %clf;
+    a = aa(10:10:end,:);
+    a = reshape(a,[size(a,1) 2*Side+1 2*Side+1]); a = a/max(a(:));
+    subplot 121; montage(permute(a, [2 3 4 1]));
+    title('angio images')
+    ss = s(10:10:end,:);
+    ss = reshape(ss,[size(ss,1) 2*Side+1 2*Side+1]);
+    subplot 122; montage(permute(ss, [2 3 4 1]));
+    % set(figure(4),'Name',);
+    title(['segmentation for slices 10-' num2str(size(a,1)*10)])
+    drawnow;
 end
 
 flowPulsatile = zeros(size(area_val,1),nframes);
 % initialize pulsatile volume
 flowPulsatile_vol = zeros(prod(size(angio)),nframes);
 vTimeFramerowMean = zeros(size(area_val,1),nframes);
-
-switch ori
-    case 1
-        tmpOri = [-1;-1;-1];
-    case 2
-        tmpOri = [-1;-1;-1];
-    case 3
-        tmpOri = [-1; -1; 1];
-end
 
 for j = 1:nframes
     
@@ -192,9 +224,9 @@ for j = 1:nframes
     v1 = reshape(v1,[length(branchActual),(Side.*2+1).^2]);
     v2 = reshape(v2,[length(branchActual),(Side.*2+1).^2]);
     v3 = reshape(v3,[length(branchActual),(Side.*2+1).^2]);
-    v1 = tmpOri(1)*bsxfun(@times,v1,Tangent_V(:,1));
-    v2 = tmpOri(2)*bsxfun(@times,v2,Tangent_V(:,2));     %%%%% TEST!!
-    v3 = tmpOri(3)*bsxfun(@times,v3,Tangent_V(:,3));      % if coronal, positive, if sagittal negative
+    v1 = bsxfun(@times,v1,Tangent_V(:,1));        % this is Z direction
+    v2 = bsxfun(@times,v2,Tangent_V(:,2));
+    v3 = -bsxfun(@times,v3,Tangent_V(:,3));
     
     % Apply rotations to velocity components in velocity cross
     % section before computing parameters

@@ -37,10 +37,34 @@ nframes = header.nphases;                                       % number of reco
 timeres = max(header.tbl(:,header.tblcols.ttime))/nframes;      % temporal resolution, in ms
 fov = header.fov;                                               % Field of view in cm
 res = round([header.nrows header.ncols header.nslices]);        % number of pixels in row,col,slices
-VENC = max(header.pevelocity)*10;                                 % venc, in mm/s
+VENC = max(header.pevelocity)*10;                               % venc, in mm/s
 pixdim = header.pixdim;                                         % the reconstructed resolution
 ori = header.tbl(1,26);                                         % orientation number (1 - axial, 2 - sagittal, 3 - coronal)
 
+% load the mask .mat file, if available. then check to see if some of the
+% trailing frames have high acceleration factors (R>30). Remove these
+tmp = dir([directory '/*mask.mat']);
+if ~isempty(tmp)
+    load(fullfile(directory,tmp(1).name));
+    mask = squeeze(mask(:,:,:,1,:,:,:,:,:,1));  % cardiac phase is 4th dim
+    
+    % loop through cardiac phases and calculate the R for each
+    for cp = 1:nframes
+        m = mask(:,:,:,cp);
+        R(cp) = numel(m)/sum(m(:)) /4*pi;
+    end
+    
+    idxToRemove = find(R>30);
+    
+    % remove these
+    MAG(:,:,:,idxToRemove) = [];
+    v(:,:,:,:,idxToRemove) = [];
+    
+    % update other parameters
+    nframes = nframes - numel(idxToRemove);
+    disp(['Removing the last ' num2str(numel(idxToRemove)) ' cardiac frames'])
+end
+    
 % scale velocity
 v = (v./2048)*VENC;
 
