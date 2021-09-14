@@ -1,5 +1,6 @@
 function [flowPerHeartCycle_vol, flowPulsatile_vol, segment1, area_val] = ...
-    params_timeResolved(branchActual, angio, MAG, v, nframes, pixdim, aortaSeg_timeResolved, bTimeResolvedSeg, displayWaitBar)
+    params_timeResolved(branchActual, angio, MAG, v, nframes, pixdim, aortaSeg_timeResolved,...
+    isSegLoaded, bTimeResolvedSeg, displayWaitBar)
 
 global r
 
@@ -149,7 +150,11 @@ end
 
 if ~bTimeResolvedSeg    % if no time-resolved segmentation, use kmeans of magnitude and angio images
     %Interpolation for the complex difference data
-    angio_int   = interp3(y,x,z,angio,y_full(:),x_full(:),z_full(:),'cubic',0);
+    if isSegLoaded
+        angio_int = interp3(y,x,z,aortaSeg_timeResolved(:,:,:,1),y_full(:),x_full(:),z_full(:),'cubic',0);
+    else
+        angio_int   = interp3(y,x,z,angio,y_full(:),x_full(:),z_full(:),'cubic',0);
+    end
     %     MAG_int     = interp3(y,x,z,mean(MAG,4),y_full(:),x_full(:),z_full(:),'cubic',0);
     SE = strel('disk', 2);
     aa = reshape(angio_int,[length(branchActual),(Side.*2+1)*(Side.*2+1)]);

@@ -2,7 +2,6 @@ function [D, fitObject, dist_total] = calc_pwv(waveforms,dist_total, timeres, PW
 
 % PWV calc type: 1 is cross correlation, 2 is TTF, 3 is Wavelet
 % normalize waveforms, save scalingFactor to update delays appropriately
-wF_copy = waveforms;
 [waveforms] = normalize(waveforms', 'norm');
 waveforms = waveforms';
 
@@ -51,7 +50,7 @@ end
 % for wavelet
 [y1,PERIOD,SCALE,COI,DJ, PARAMOUT, K] = contwt(flow_sl1,0.001,1,[],[],[],'dog',4);
 f1 = 1./PERIOD;
-ind = [];
+% ind = [];
 % loop over all flow curves
 for slice = 2:size(waveforms,1)
     
@@ -83,14 +82,14 @@ for slice = 2:size(waveforms,1)
             sl1 = zeros(size(flow_sl1));sl1(pts1) = flow_sl1(pts1);
             sl2 = zeros(size(flow_sl2));sl2(pts2) = flow_sl2(pts2);
             tempDelay = abs(finddelay(sl1,sl2)) * scale;
-            if (dist_total(slice-1) > 20 && tempDelay < 1) || ...
-                    (dist_total(slice-1) > 40 && tempDelay < 2) || ...
-                    (dist_total(slice-1) > 60 && tempDelay < 3) || ...
-                    (dist_total(slice-1) > 80 && tempDelay < 4) || ...
-                    (dist_total(slice-1) > 100 && tempDelay < 6)
-                % force the delays to make sense along vessel
-                ind = cat(1,ind,slice);     % to remove at the end for fitting
-            end
+%             if (dist_total(slice-1) > 20 && tempDelay < 1) || ...
+%                     (dist_total(slice-1) > 40 && tempDelay < 2) || ...
+%                     (dist_total(slice-1) > 60 && tempDelay < 3) || ...
+%                     (dist_total(slice-1) > 80 && tempDelay < 4) || ...
+%                     (dist_total(slice-1) > 100 && tempDelay < 6)
+%                 % force the delays to make sense along vessel
+%                 ind = cat(1,ind,slice);     % to remove at the end for fitting
+%             end
             D(slice-1) = tempDelay;
             
         case 2      % TTF
@@ -119,19 +118,18 @@ for slice = 2:size(waveforms,1)
             tempDelay = abs(sum(aa(:)))*1000 * scale;
             
             % re-scale delay from zscore
-            [~, m1, s1] = zscore(fl1_copy(pts));
-            [~, m2, s2] = zscore(fl2_copy(pts));
+            [~, m1, s1] = zscore(fl1_copy(pts1));
+            [~, m2, s2] = zscore(fl2_copy(pts2));
             tempDelay = tempDelay/(s1/s2);
-%             tempDelay = tempDelay/(scalingFactor(slice-1));
             
-            if (dist_total(slice-1) > 20 && tempDelay < 1) || ...
-                    (dist_total(slice-1) > 40 && tempDelay < 2) || ...
-                    (dist_total(slice-1) > 60 && tempDelay < 3) || ...
-                    (dist_total(slice-1) > 80 && tempDelay < 4) || ...
-                    (dist_total(slice-1) > 100 && tempDelay < 6)
-                % force the delays to make sense along vessel
-                ind = cat(1,ind,slice);     % to remove at the end for fitting
-            end
+%             if (dist_total(slice-1) > 20 && tempDelay < 1) || ...
+%                     (dist_total(slice-1) > 40 && tempDelay < 2) || ...
+%                     (dist_total(slice-1) > 60 && tempDelay < 3) || ...
+%                     (dist_total(slice-1) > 80 && tempDelay < 4) || ...
+%                     (dist_total(slice-1) > 100 && tempDelay < 6)
+%                 % force the delays to make sense along vessel
+%                 ind = cat(1,ind,slice);     % to remove at the end for fitting
+%             end
             
             D(slice - 1) = tempDelay;
     end
@@ -150,9 +148,9 @@ for slice = 2:size(waveforms,1)
     end
     
 end
-% remove unused slices
-D(ind-1) = [];
-dist_total(ind-1) = [];
+% % remove unused slices
+% D(ind-1) = [];
+% dist_total(ind-1) = [];
 
 % remove outliers
 [D, TF] = rmoutliers(D,'movmedian', 30, 'ThresholdFactor',2);
