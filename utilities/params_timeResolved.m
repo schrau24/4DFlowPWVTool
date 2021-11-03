@@ -221,7 +221,7 @@ for j = 1:nframes
     v3 = reshape(v3,[length(branchActual),(Side.*2+1).^2]);
     v1 = bsxfun(@times,v1,Tangent_V(:,1));        % this is Z direction
     v2 = bsxfun(@times,v2,Tangent_V(:,2));
-    v3 = -bsxfun(@times,v3,Tangent_V(:,3));
+    v3 = bsxfun(@times,v3,Tangent_V(:,3));
     
     % Apply rotations to velocity components in velocity cross
     % section before computing parameters
