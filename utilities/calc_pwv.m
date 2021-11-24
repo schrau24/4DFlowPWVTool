@@ -130,8 +130,6 @@ idx = isnan(D);
 D(idx) = []; dist_total(idx) = [];
 
 if length(D) > 1
-    % now do a linear fit to calculate slope, save also rmse
-%     [fitObject, ~] = polyfit(dist_total,D,1);
     [fitObject, ~] = polyfitZero(dist_total,D,1);
 else
     fitObject = nan;
