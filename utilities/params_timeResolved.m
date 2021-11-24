@@ -176,27 +176,22 @@ if ~bTimeResolvedSeg    % if no time-resolved segmentation, use kmeans of magnit
             waitbar (sl/size(aa,1), h);
         end
     end
+    
     % area
     vox = mean(pixdim)/10;
+    tmpArea = sum(s,2)*(vox*(2*r+1)/(2*r*InterpVals+1))^2;
+    % find outliers
+    outLieridx = find(isoutlier(tmpArea,'movmedian',length(tmpArea)));
+    indices = 1:length(tmpArea);
+    for ii = 1:length(outLieridx)
+       % search before and after ~3 cross sections to find a suitable
+       % segmentation to use and then average them
+       currInd = ii-3:ii+3;
+       segmentsToUse = find(ismember(currInd,indices) & ~ismember(currInd,outLieridx(ii)));
+       s(outLieridx(ii),:) = mean(s(segmentsToUse,:),1);
+    end
     area_val = repmat(sum(s,2)*(vox*(2*r+1)/(2*r*InterpVals+1))^2,[1 nframes]);
     segment1 = repmat(s,[1 1 nframes]);
-    
-    %     if 1
-    %         CD_int = interp3(y,x,z,mean(aortaSeg_timeResolved,4),y_full(:),x_full(:),z_full(:),'cubic',0);
-    %         for n = 10:10:size(aa,1)
-    %             figure(4); %clf;
-    %             set(figure(4),'Name',['centerline point ' num2str(n)]);
-    %             a = squeeze(reshape(aa(n,:),[1 2*Side+1 2*Side+1])); a = a/max(a(:));
-    % %             m = squeeze(reshape(mm(n,:),[1 2*Side+1 2*Side+1]));
-    %             ss = squeeze(reshape(s(n,:),[1 2*Side+1 2*Side+1]));
-    %
-    %             subplot 121;imshow(a)
-    % %             subplot 132;imshow(m)
-    %             subplot 122;imshow(ss)
-    %             pause(0.2);
-    %
-    %         end
-    %     end
     
     figure(4); %clf;
     a = aa(10:10:end,:);
@@ -226,7 +221,7 @@ for j = 1:nframes
     v3 = reshape(v3,[length(branchActual),(Side.*2+1).^2]);
     v1 = bsxfun(@times,v1,Tangent_V(:,1));        % this is Z direction
     v2 = bsxfun(@times,v2,Tangent_V(:,2));
-    v3 = -bsxfun(@times,v3,Tangent_V(:,3));
+    v3 = bsxfun(@times,v3,Tangent_V(:,3));
     
     % Apply rotations to velocity components in velocity cross
     % section before computing parameters
