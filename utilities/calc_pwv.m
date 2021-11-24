@@ -1,6 +1,6 @@
 function [D, fitObject, dist_total] = calc_pwv(waveforms,dist_total, timeres, PWVcalctype, scale)
 
-% PWV calc type: 1 is cross correlation, 2 is TTF, 3 is Wavelet
+% PWV calc type: 1 is cross correlation, 2 is Wavelet
 % normalize waveforms
 [waveforms] = normalize(waveforms', 'norm');
 waveforms = waveforms';
@@ -26,7 +26,7 @@ end
 % normalize
 % flow_sl1 = flow_sl1./max(abs(flow_sl1));
 
-% find the systolic upslope, TTF and wavelet
+% find the systolic upslope, Wavelet
 [maxFl, indMax1] = max(flow_sl1);
 
 % circshift to put max at center
@@ -40,10 +40,10 @@ indEnd   = max(find(flow_sl1(indStart:midPt) < 0.8*maxFl)) + indStart -1;
 
 pts1 = indStart:indEnd;
 
-if PWVcalctype == 2     % TTF
-    fitObject = polyfit(pts1,flow_sl1(pts1),1);
-    D(1) = -fitObject(2) / fitObject(1);
-end
+% if PWVcalctype == 2     % TTF
+%     fitObject = polyfit(pts1,flow_sl1(pts1),1);
+%     D(1) = -fitObject(2) / fitObject(1);
+% end
 
 % for wavelet
 [y1,PERIOD,SCALE,COI,DJ, PARAMOUT, K] = contwt(flow_sl1,0.001,1,[],[],[],'dog',4);
@@ -75,11 +75,11 @@ for slice = 2:size(waveforms,1)
             tempDelay = abs(finddelay(sl1,sl2)) * scale;
             D(slice-1) = tempDelay;
             
-        case 2      % TTF
-            fitObject = polyfit(pts2,flow_sl2(pts2),1);
-            D(slice) = -fitObject(2) / fitObject(1);
+%         case 2      % TTF
+%             fitObject = polyfit(pts2,flow_sl2(pts2),1);
+%             D(slice) = -fitObject(2) / fitObject(1);
             
-        case 3      % Wavelet time delay estimation
+        case 2      % Wavelet time delay estimation
             [y2,~,~,~,~,~,~] = contwt(flow_sl2,0.001,1,[],[],[],'dog',4);
 
             % cross-spectrum is only performed on 
