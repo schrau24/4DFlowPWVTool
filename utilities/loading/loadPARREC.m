@@ -5,8 +5,7 @@ function [directory, nframes, res, fov, pixdim, timeres, v, MAG, magWeightVel, a
 [filename,directory] = uigetfile('*.rec','Select Reconstructed Data');
 fBase = filename(1:end-5);
 
-tic
-
+warning('off','all');
 %% grab each parrec and save corresponding data
 disp('Loading data')
 PARRECFILE = fullfile(directory,[fBase, '1.rec']);
@@ -26,6 +25,7 @@ PARRECFILE = fullfile(directory,[fBase, '3.rec']);
 IMG3 = double(IMG3);
 vz = squeeze(IMG3(:,:,:,:,:,2,:))-2048;
 mag3 = squeeze(IMG3(:,:,:,:,:,1,:));
+warning('on','all');
 
 MAG = mean(cat(5,mag1,mag2,mag3),5);
 
@@ -45,6 +45,7 @@ ori = header.tbl(1,26);                                         % orientation nu
 % trailing frames have high acceleration factors (R>30). Remove these
 tmp = dir([directory '/*mask.mat']);
 if ~isempty(tmp)
+    disp('Checking for cardiac frames with high acceleration (R>30)')
     load(fullfile(directory,tmp(1).name));
     mask = squeeze(mask(:,:,:,1,:,:,:,:,:,1));  % cardiac phase is 4th dim
     
@@ -108,7 +109,6 @@ end
 [magWeightVel, angio] = calc_angio(MAG, v, VENC);
 
 disp('Load Data finished');
-toc
 return
 
 
