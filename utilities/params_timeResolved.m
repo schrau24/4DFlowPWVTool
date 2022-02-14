@@ -180,16 +180,16 @@ if ~bTimeResolvedSeg    % if no time-resolved segmentation, use kmeans of magnit
     % area
     vox = mean(pixdim)/10;
     tmpArea = sum(s,2)*(vox*(2*r+1)/(2*r*InterpVals+1))^2;
-    % find outliers
-    outLieridx = find(isoutlier(tmpArea,'movmedian',length(tmpArea)));
-    indices = 1:length(tmpArea);
-    for ii = 1:length(outLieridx)
-       % search before and after ~3 cross sections to find a suitable
-       % segmentation to use and then average them
-       currInd = ii-3:ii+3;
-       segmentsToUse = find(ismember(currInd,indices) & ~ismember(currInd,outLieridx(ii)));
-       s(outLieridx(ii),:) = mean(s(segmentsToUse,:),1);
-    end
+%     % find outliers
+%     outLieridx = find(isoutlier(tmpArea,'movmedian',length(tmpArea)));
+%     indices = 1:length(tmpArea);
+%     for ii = 1:length(outLieridx)
+%        % search before and after ~3 cross sections to find a suitable
+%        % segmentation to use and then average them
+%        currInd = ii-3:ii+3;
+%        segmentsToUse = find(ismember(currInd,indices) & ~ismember(currInd,outLieridx(ii)));
+%        s(outLieridx(ii),:) = mean(s(segmentsToUse,:),1);
+%     end
     area_val = repmat(sum(s,2)*(vox*(2*r+1)/(2*r*InterpVals+1))^2,[1 nframes]);
     segment1 = repmat(s,[1 1 nframes]);
     
@@ -221,7 +221,7 @@ for j = 1:nframes
     v3 = reshape(v3,[length(branchActual),(Side.*2+1).^2]);
     v1 = bsxfun(@times,v1,Tangent_V(:,1));        % this is Z direction
     v2 = bsxfun(@times,v2,Tangent_V(:,2));
-    v3 = -bsxfun(@times,v3,Tangent_V(:,3));
+    v3 = bsxfun(@times,v3,Tangent_V(:,3));
     
     % Apply rotations to velocity components in velocity cross
     % section before computing parameters
