@@ -49,7 +49,7 @@ unchangedBorders = 0;
 
 while( unchangedBorders < 6 )  % loop until no change for all six border types
     unchangedBorders = 0;
-    for currentBorder=randperm(6)%1:6 % loop over all 6 directions
+    for currentBorder=1:6 %randperm(6)% loop over all 6 directions
         skel_ind = find(skel(:)==1);
         switch currentBorder
             case 4
