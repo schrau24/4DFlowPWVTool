@@ -14,10 +14,10 @@ Additionally, the use of this software requires the following Matlab toolboxes:
 
 **Data needed:**
 This version of the app works directly on reconstructed dicom files from a GE 4D flow acquisition. It assumes these are all located within a top folder. The subfolders that contain the dicoms are assumed to have the following names: 
-ANATOMY (containing the time-resolved **magnitude** data)
-AP FLOW (containing the time-resolved **ap velocity** data)
-LR FLOW (containing the time-resolved **lr velocity** data)
-SI FLOW (containing the time-resolved **si velocity** data)
+	ANATOMY (containing the time-resolved **magnitude** data)
+	AP FLOW (containing the time-resolved **ap velocity** data)
+	LR FLOW (containing the time-resolved **lr velocity** data)
+	SI FLOW (containing the time-resolved **si velocity** data)
 
 **Getting Started:**
 Within Matlab, navigate to the folder containing PulseWaveVelocityTool.mlapp. Type this into your command window:
