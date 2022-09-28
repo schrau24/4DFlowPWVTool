@@ -1,4 +1,4 @@
-function [D, fitObject, dist_total] = calc_pwv(waveforms,dist_total, timeres, PWVcalctype, AreaScale)
+function [D, fitObject, R, dist_total] = calc_pwv(waveforms,dist_total, timeres, PWVcalctype, AreaScale)
 
 % waveforms = waveforms./repmat(AreaScale',[1 size(waveforms,2)]);
 % PWV calc type: 1 is cross correlation, 2 is Wavelet
@@ -126,7 +126,9 @@ idx = isnan(D);
 D(idx) = []; dist_total(idx) = [];
 
 if length(D) > 1
-    [fitObject, ~] = polyfitZero(dist_total,D,1);
+    [fitObject] = polyfitZero(dist_total,D,1);
+    R = corrcoef(dist_total,D);
 else
     fitObject = nan;
+    R = nan;
 end
