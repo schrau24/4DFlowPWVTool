@@ -73,38 +73,38 @@ v = (v./2048)*VENC;
 vMean = mean(v,5);
 MAG = MAG./max(MAG(:));
 
-% Calculate a Polynomial
-[poly_fitx,poly_fity, poly_fitz] = background_phase_correction(mean(MAG,4),vMean(:,:,:,1),vMean(:,:,:,2),vMean(:,:,:,3),VENC);
-%%
-disp('Correcting Data with Polynomial');
-xrange = single( linspace(-1,1,size(MAG,1)));
-yrange = single( linspace(-1,1,size(MAG,2)));
-zrange = single( linspace(-1,1,size(MAG,3)));
-[y,x,z] = meshgrid( yrange,xrange,zrange);
-
-disp('   Vx');
-back = evaluate_poly(x,y,z,poly_fitx);
-back = single(back);
-vMean(:,:,:,1) = vMean(:,:,:,1) - back;
-for m = 0 : nframes - 1
-    v(:,:,:,1,m+1) = v(:,:,:,1,m+1) - back;
-end
-
-disp('   Vy');
-back = evaluate_poly(x,y,z,poly_fity);
-back = single(back);
-vMean(:,:,:,2) = vMean(:,:,:,2) - back;
-for m = 0 : nframes - 1
-    v(:,:,:,2,m+1) = v(:,:,:,2,m+1) - back;
-end
-
-disp('   Vz');
-back = evaluate_poly(x,y,z,poly_fitz);
-back = single(back);
-vMean(:,:,:,3) = vMean(:,:,:,3) - back;
-for m = 0 : nframes - 1
-    v(:,:,:,3,m+1) = v(:,:,:,3,m+1) - back;
-end
+% % Calculate a Polynomial
+% [poly_fitx,poly_fity, poly_fitz] = background_phase_correction(mean(MAG,4),vMean(:,:,:,1),vMean(:,:,:,2),vMean(:,:,:,3),VENC);
+% %%
+% disp('Correcting Data with Polynomial');
+% xrange = single( linspace(-1,1,size(MAG,1)));
+% yrange = single( linspace(-1,1,size(MAG,2)));
+% zrange = single( linspace(-1,1,size(MAG,3)));
+% [y,x,z] = meshgrid( yrange,xrange,zrange);
+% 
+% disp('   Vx');
+% back = evaluate_poly(x,y,z,poly_fitx);
+% back = single(back);
+% vMean(:,:,:,1) = vMean(:,:,:,1) - back;
+% for m = 0 : nframes - 1
+%     v(:,:,:,1,m+1) = v(:,:,:,1,m+1) - back;
+% end
+% 
+% disp('   Vy');
+% back = evaluate_poly(x,y,z,poly_fity);
+% back = single(back);
+% vMean(:,:,:,2) = vMean(:,:,:,2) - back;
+% for m = 0 : nframes - 1
+%     v(:,:,:,2,m+1) = v(:,:,:,2,m+1) - back;
+% end
+% 
+% disp('   Vz');
+% back = evaluate_poly(x,y,z,poly_fitz);
+% back = single(back);
+% vMean(:,:,:,3) = vMean(:,:,:,3) - back;
+% for m = 0 : nframes - 1
+%     v(:,:,:,3,m+1) = v(:,:,:,3,m+1) - back;
+% end
 
 [magWeightVel, angio] = calc_angio(MAG, v, VENC);
 
