@@ -7,6 +7,11 @@ E. Schrauben, A. WÃ¥hlin, K. Ambarki, E. Spaak, J. Malm, O. Wieben, A. Eklund. â
 **Installation:**
 This app is built using Matlab's appdesigner functionality. It was built using Matlab version 2019a; it is therefore recommended to use this version or **newer** for running this app. Download and unzip the files. All functionality of the app is built into PulseWaveVelocityTool.mlapp and the corresponding utilities/ subfolder.
 
+Additionally, the use of this software requires the following Matlab toolboxes:
+- Signal Processing Toolbox
+- Image Processing Toolbox
+- Statistics and Machine Learning Toolbox
+
 **Data needed:**
 The app works directly on reconstructed .par / .rec files from a Philips 4D flow acquisition. It assumes these are all located within a single folder. The files needed are as follows: 
 SUBJECTID or other identifier_1.par, SUBJECTID or other identifier_1.rec 

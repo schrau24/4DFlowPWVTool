@@ -1,33 +1,35 @@
-function [D, fitObject, dist_total] = calc_pwv(waveforms,dist_total, timeres, PWVcalctype, scale)
+function [D, fitObject, R, dist_total] = calc_pwv(waveforms,dist_total, timeres, PWVcalctype, AreaScale)
 
-% PWV calc type: 1 is cross correlation, 2 is TTF, 3 is Wavelet
+% waveforms = waveforms./repmat(AreaScale',[1 size(waveforms,2)]);
+% PWV calc type: 1 is cross correlation, 2 is Wavelet
 % normalize waveforms
-[waveforms] = normalize(waveforms', 'norm');
-waveforms = waveforms';
+% [waveforms,C,S] = normalize(waveforms', 'norm');
+% waveforms = waveforms';
 
-% to interp to 1/scale ms, we need how many frames?
+% to interp to 1 ms, we need how many frames?
 nFrames = size(waveforms,2);
-nFrames_interp = floor(timeres/scale*nFrames);
+nFrames_interp = floor(timeres*nFrames);
 
 % interp params
 x = 1:nFrames;
 xq = linspace(1,nFrames,nFrames_interp);
 METHOD = 'pchip';
+smoothAmount = 25;
 plot_steps = false;
 
 % grab first flow waveform
-flow_sl1 = smoothdata(interp1(x,waveforms(1,:),xq,METHOD),25);
+flow_sl1 = smoothdata(interp1(x,waveforms(1,:),xq,METHOD),'sgolay',smoothAmount);
 
 if min(flow_sl1) < 0
     flow_sl1 = flow_sl1 + abs(min(flow_sl1));
 elseif min(flow_sl1) > 0
     flow_sl1 = flow_sl1 - min(flow_sl1);
 end
-% normalize
-% flow_sl1 = flow_sl1./max(abs(flow_sl1));
 
-% find the systolic upslope, TTF and wavelet
+% find the systolic upslope, Wavelet
 [maxFl, indMax1] = max(flow_sl1);
+
+flow_sl1=flow_sl1/maxFl;
 
 % circshift to put max at center
 midPt = round(length(flow_sl1)/2);
@@ -35,15 +37,10 @@ flow_sl1 = circshift(flow_sl1, midPt-indMax1);
 fl1_copy = circshift(interp1(x,waveforms(1,:),xq,METHOD), midPt-indMax1);
 
 % 20% of max, first to the left
-indStart = max(find(flow_sl1(1:midPt) < 0.2*maxFl)) + 1;
-indEnd   = max(find(flow_sl1(indStart:midPt) < 0.8*maxFl)) + indStart -1;
+indStart = max(find(flow_sl1(1:midPt) < 0.2)) + 1;
+indEnd   = max(find(flow_sl1(indStart:midPt) < 0.8)) + indStart -1;
 
 pts1 = indStart:indEnd;
-
-if PWVcalctype == 2     % TTF
-    fitObject = polyfit(pts1,flow_sl1(pts1),1);
-    D(1) = -fitObject(2) / fitObject(1);
-end
 
 % for wavelet
 [y1,PERIOD,SCALE,COI,DJ, PARAMOUT, K] = contwt(flow_sl1,0.001,1,[],[],[],'dog',4);
@@ -52,7 +49,7 @@ f1 = 1./PERIOD;
 for slice = 2:size(waveforms,1)
     
     % second flow waveform, circshift by same amount as first waveform
-    flow_sl2 = smoothdata(circshift(interp1(x,waveforms(slice,:),xq,METHOD), midPt-indMax1),25);
+    flow_sl2 = smoothdata(circshift(interp1(x,waveforms(slice,:),xq,METHOD), midPt-indMax1),'sgolay',smoothAmount);
     fl2_copy = circshift(interp1(x,waveforms(slice,:),xq,METHOD), midPt-indMax1);
     if min(flow_sl2) < 0
         flow_sl2 = flow_sl2 + abs(min(flow_sl2));
@@ -63,23 +60,22 @@ for slice = 2:size(waveforms,1)
     % find the systolic upslope (20% < x < 80%) at or after maxInd of
     % flow_sl1
     [maxFl, indMax2] = max(flow_sl2);
+    
+    flow_sl2=flow_sl2/maxFl;
+    
     % 20% of max, first to the left
-    indStart = max(find(flow_sl2(1:indMax2) < 0.2*maxFl)) + 1;
-    indEnd   = max(find(flow_sl2(indStart:indMax2) < 0.8*maxFl)) + indStart -1;
+    indStart = max(find(flow_sl2(1:indMax2) < 0.2)) + 1;
+    indEnd   = max(find(flow_sl2(indStart:indMax2) < 0.8)) + indStart -1;
     pts2 = indStart:indEnd;
     
     switch PWVcalctype
         case 1      % cross-correlation
             sl1 = zeros(size(flow_sl1));sl1(pts1) = flow_sl1(pts1);
             sl2 = zeros(size(flow_sl2));sl2(pts2) = flow_sl2(pts2);
-            tempDelay = abs(finddelay(sl1,sl2)) * scale;
+            tempDelay = abs(finddelay(sl1,sl2));
             D(slice-1) = tempDelay;
             
-        case 2      % TTF
-            fitObject = polyfit(pts2,flow_sl2(pts2),1);
-            D(slice) = -fitObject(2) / fitObject(1);
-            
-        case 3      % Wavelet time delay estimation
+        case 2      % Wavelet time delay estimation
             [y2,~,~,~,~,~,~] = contwt(flow_sl2,0.001,1,[],[],[],'dog',4);
 
             % cross-spectrum is only performed on 
@@ -98,17 +94,17 @@ for slice = 2:size(waveforms,1)
             
             psi =   atan2(imag(y),real(y))./repmat(f1(ind_f)'*2*pi,[1 length(pts)]);
             aa =    dot(y_hat,psi);  % eqn 7 in Bargiotas paper
-            tempDelay = abs(sum(aa(:)))*1000 * scale;
+            tempDelay = abs(sum(aa(:)))*1000;
             
             % re-scale delay from zscore
-            [~, m1, s1] = zscore(fl1_copy(pts));
-            [~, m2, s2] = zscore(fl2_copy(pts));
-            tempDelay = tempDelay/(s1/s2);        
+%             [~, m1, s1] = zscore(fl1_copy(pts));
+%             [~, m2, s2] = zscore(fl2_copy(pts));
+%             tempDelay = tempDelay/(s1/s2);  
+%             tempDelay = tempDelay*(S(1)/S(slice));
             D(slice - 1) = tempDelay;
     end
     
-    
-    if plot_steps && mod(slice,10) == 2
+    if plot_steps && mod(slice,10) == 5
         figure(400); clf;
         plot(flow_sl1,'r'); hold on;
         plot(pts1,flow_sl1(pts1),'r*')
@@ -130,9 +126,9 @@ idx = isnan(D);
 D(idx) = []; dist_total(idx) = [];
 
 if length(D) > 1
-    % now do a linear fit to calculate slope, save also rmse
-%     [fitObject, ~] = polyfit(dist_total,D,1);
-    [fitObject, ~] = polyfitZero(dist_total,D,1);
+    [fitObject] = polyfitZero(dist_total,D,1);
+    R = corrcoef(dist_total,D);
 else
     fitObject = nan;
+    R = nan;
 end

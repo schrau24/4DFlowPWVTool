@@ -163,7 +163,7 @@ else
 end
 
 % eric, non-square image flag
-isNonSquare = size(1) ~= sz(2);
+isNonSquare = sz(1) ~= sz(2);
 
 % when file is sorted (as is usual) ii = idx+1
 % indexes go from 0 to n-1, n = # of images in file

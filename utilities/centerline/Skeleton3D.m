@@ -26,7 +26,7 @@ skel=padarray(img,[1 1 1]);
 
 if(nargin==2)
     spare=padarray(spare,[1 1 1]);
-end;
+end
 
 % number of foreground voxels
 l_orig = length(find(skel(:)));
@@ -49,33 +49,33 @@ unchangedBorders = 0;
 
 while( unchangedBorders < 6 )  % loop until no change for all six border types
     unchangedBorders = 0;
-    for currentBorder=1:6 % loop over all 6 directions
+    for currentBorder=randperm(6)%1:6 % loop over all 6 directions
         skel_ind = find(skel(:)==1);
         switch currentBorder
-            case 4,
+            case 4
              cands = skel_ind+ind_dir(1,2);
              cands = skel_ind(~logical(skel(cands)));
-            case 3,
+            case 3
              cands = skel_ind+ind_dir(1,1);
              cands = skel_ind(~logical(skel(cands)));
-            case 1,
+            case 1
              cands = skel_ind+ind_dir(1,4);
              cands = skel_ind(~logical(skel(cands)));
-            case 2,
+            case 2
              cands = skel_ind+ind_dir(1,3);
              cands = skel_ind(~logical(skel(cands)));
-            case 6,
+            case 6
              cands = skel_ind+ind_dir(1,6);
              cands = skel_ind(~logical(skel(cands)));
-            case 5,
+            case 5
              cands = skel_ind+ind_dir(1,5);
              cands = skel_ind(~logical(skel(cands)));
-        end;
+        end
         
         % if excluded voxels were passed, remove them from candidates
         if(nargin==2)
             cands = cands.*~spare;
-        end;
+        end
         
         % make sure all candidates are indeed foreground voxels
         cands = intersect(cands,skel_ind);
@@ -145,20 +145,20 @@ while( unchangedBorders < 6 )  % loop until no change for all six border types
                             skel(li(di_rc))=1;
                         else
                             noChange = false; % at least one voxel removed
-                        end;
-                    end;
-                end;
-            end;
-        end;
+                        end
+                    end
+                end
+            end
+        end
         
         if( noChange )
             unchangedBorders = unchangedBorders + 1;
-        end;
+        end
         fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b');
         fprintf('removed %3d%% voxels',round(100*(l_orig-length(find(skel(:))))/l_orig));
         
-    end;
-end;
+    end
+end
 
 fprintf('\n');
 
