@@ -8,8 +8,7 @@ message: >-
   metadata from this file.
 type: software
 authors:
-  - given-names: 
-    name-particle: Eric
+  - name-particle: Eric
     family-names: Schrauben
     name-suffix: PhD
     email: schrau24@gmail.com
