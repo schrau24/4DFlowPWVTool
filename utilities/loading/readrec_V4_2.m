@@ -412,7 +412,10 @@ end
 if (header.par_version >= 4 )
     header.nrows = A(1,10);
     header.ncols = A(1,11);
-    header.pixdim = [A(1,29) A(1,30) A(1,23)+A(1,24)];
+    
+    % for PROUD, overwrite to true extent (FOV) / matrix size
+%     header.pixdim = [A(1,29) A(1,30) A(1,23)+A(1,24)];
+    header.pixdim = [header.fov(2)/header.nrows header.fov(2)/header.nrows header.fov(1)/header.nslices];
 end
 
 %% additional header fields

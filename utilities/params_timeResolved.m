@@ -4,7 +4,7 @@ function [flowPerHeartCycle_vol, flowPulsatile_vol, segment1, area_val] = ...
 
 global r
 
-d = 4;  % the number of points before and after to calculate orthogonal plane
+d = 3;  % the number of points before and after to calculate orthogonal plane
 Tangent_V = zeros(0,3);
 
 dir_temp = zeros(size(branchActual,1),3);
@@ -233,6 +233,12 @@ end
 
 % need to initialize 3D volumes for each of these parameters
 flowPerHeartCycle_vol = zeros(size(angio));
+
+% % test remove outliers on the vessel after normalization (noisy waveforms)
+% [waveforms,C,S] = normalize(flowPulsatile', 'norm');
+% TF=isoutlier(sum(waveforms,1)./(nframes));
+% indexes(TF) = []; flowPulsatile(TF,:) = [];
+
 % total flow
 flowPerHeartCycle_vol(indexes) = sum(flowPulsatile,2)./(nframes);
 if displayWaitBar
