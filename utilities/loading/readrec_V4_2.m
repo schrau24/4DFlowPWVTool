@@ -48,7 +48,7 @@ i = 1;
 while i <= length(varargin)
     switch varargin{i}
         case 'noscale'
-			noscale = 1;
+            noscale = 1;
         case 'quiet'
             quiet = 1;
         case 'par'
@@ -90,7 +90,7 @@ else
     else
         error('Yo dude, %s does not seem to be a PAR or REC file', filename);
     end
-
+    
     % load in the PAR file
     header = parseHeader(filename_par, quiet);
     if header.nrows == 0
@@ -103,7 +103,7 @@ if par == 1
     return
 end
 
-%%  
+%%
 A = header.tbl;
 %if (header.par_version >= 4)
 %    if (header.corbadump)
@@ -112,7 +112,7 @@ A = header.tbl;
 %        typeind = 6; %??need to check this
 %    end
 %else
-    typeind = 5;
+typeind = 5;
 %end
 
 % Number of types of scans:  0 = Magnitude, 1 = Real, 2 = Imaginary,
@@ -142,13 +142,13 @@ else
 end
 
 fp = fopen(tmpname, 'rb', 'l');
-if (fp == -1 )    
+if (fp == -1 )
     error('readrec: file %s does not exist', tmpname);
 end
 
 % progress bar
 if ~quiet
-    h = waitbar(0, strrep(sprintf('Reading in %s', filename),'_','\_')); 
+    h = waitbar(0, strrep(sprintf('Reading in %s', filename),'_','\_'));
 end
 
 %% read rec file
@@ -157,9 +157,9 @@ sz = header.sizes;
 sz(1) = header.sizes(2); % rows and cols are swapped when read
 sz(2) = header.sizes(1);
 if noscale
-	data = zeros(sz, 'uint16');
+    data = zeros(sz, 'uint16');
 else
-	data = zeros(sz);
+    data = zeros(sz);
 end
 
 % eric, non-square image flag
@@ -176,9 +176,9 @@ for idx = 0:s-1
     slope = 1.0 / A(ii,iss);
     
     if noscale
-	    d = fread (fp, [header.nrows, header.ncols], 'uint16'); 
-	else
-	    d = fread (fp, [header.nrows, header.ncols], 'int16') * slope + intercept;
+        d = fread (fp, [header.nrows, header.ncols], 'uint16');
+    else
+        d = fread (fp, [header.nrows, header.ncols], 'int16') * slope + intercept;
     end
     if isNonSquare
         d = d';
@@ -228,7 +228,7 @@ if( strfind(filename, '.gz') )
     delete(tmpname);
 end
 if ~quiet
-  close(h);
+    close(h);
 end
 
 %========================================================================
@@ -412,7 +412,10 @@ end
 if (header.par_version >= 4 )
     header.nrows = A(1,10);
     header.ncols = A(1,11);
-    header.pixdim = [A(1,29) A(1,30) A(1,23)+A(1,24)];
+    % for PROUD, overwrite to true extent (FOV) / matrix size
+    %      header.pixdim = [A(1,29) A(1,30) A(1,23)+A(1,24)];
+    header.pixdim = [header.fov(2)/header.ncols header.fov(1)/header.nrows header.fov(3)/header.nslices];
+    
 end
 
 %% additional header fields
@@ -487,7 +490,7 @@ end
 % sl ec dyn ph ty(2) idx (re)scale(3) window(2) angulation(3) offcentre(3)
 % info(4) spacing(2) echo dtime ttime diff flip
 % v4.1
-% sl ec dyn ph ty(2) idx pix scan% rec-size(2) (re)scale(3) window(2) 
+% sl ec dyn ph ty(2) idx pix scan% rec-size(2) (re)scale(3) window(2)
 % angulation(3) offcentre(3) thick gap info(4) spacing(2) echo dtime ttime
 % diff avg flip freq RR-int(2) turbo delay b grad cont anis diffusion(3)
 % v4.2
