@@ -9,21 +9,21 @@ warning('off','all');
 %% grab each parrec and save corresponding data
 disp('Loading data')
 PARRECFILE = fullfile(directory,[fBase, '1.rec']);
-[IMG1,~] = readrec_V4_2(PARRECFILE, 'noscale');
+[IMG1,~] = readrec_V4_2(PARRECFILE);
 IMG1 = double(IMG1);
-vx = squeeze(IMG1(:,:,:,:,:,2,:))-2048;
+vx = squeeze(IMG1(:,:,:,:,:,2,:));
 mag1 = squeeze(IMG1(:,:,:,:,:,1,:));
 
 PARRECFILE = fullfile(directory,[fBase, '2.rec']);
-[IMG2,~] = readrec_V4_2(PARRECFILE,'noscale');
+[IMG2,~] = readrec_V4_2(PARRECFILE);
 IMG2 = double(IMG2);
-vy = squeeze(IMG2(:,:,:,:,:,2,:))-2048;
+vy = squeeze(IMG2(:,:,:,:,:,2,:));
 mag2 = squeeze(IMG2(:,:,:,:,:,1,:));
 
 PARRECFILE = fullfile(directory,[fBase, '3.rec']);
-[IMG3,header] = readrec_V4_2(PARRECFILE, 'noscale');
+[IMG3,header] = readrec_V4_2(PARRECFILE);
 IMG3 = double(IMG3);
-vz = squeeze(IMG3(:,:,:,:,:,2,:))-2048;
+vz = squeeze(IMG3(:,:,:,:,:,2,:));
 mag3 = squeeze(IMG3(:,:,:,:,:,1,:));
 warning('on','all');
 
@@ -67,7 +67,7 @@ ori = header.tbl(1,26);                                         % orientation nu
 % end
     
 % scale velocity
-v = (v./2048)*VENC;
+v = (v./3142)*VENC;
 
 % take the means
 vMean = mean(v,5);
