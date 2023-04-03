@@ -38,8 +38,8 @@ V2 = V2./N;
 V3 = cross(Tangent_V,V2);
 
 % Get the full tangent plane for all the points
-r = 11; %Size of plane to select from non interpolated data is r*2+1
-InterpVals = 4; % Chose the interpolation between points
+r = 14; %Size of plane to select from non interpolated data is r*2+1
+InterpVals = 4; % Choose the interpolation between points
 Side = r*InterpVals; % Creates the correct number of points for interpolation
 Mid = zeros(length(branchActual),1);
 
