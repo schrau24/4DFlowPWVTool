@@ -1,4 +1,7 @@
 # 4DFlowPWVTool
+
+**NOTE: This repository is deprecated and no longer supported. For current support of PWV code, with additions for visualization, please see the [FlowProcessing](https://github.com/schrau24/FlowProcessing) tool.**
+
 a Matlab-based app for 4D flow MRI measurement of pulse wave velocity
 
 This tool is based off a previously published post-processing software. Use of this tool should be associated and cited with the following reference: 
